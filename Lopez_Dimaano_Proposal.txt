@@ -1,0 +1,19 @@
+1. Food places to pick in UP: Lunch
+
+Factors:
+	
+	Sex: M | F
+
+	Budget: Has allowance | Baon
+	Budget Cost: High | Average | Low
+	Proximity from DCS: Far | Sakto | Near
+	Accessibility: Walk | Public Transportation | Private Transportation (Own car or Friend's car)
+	Free Time: Super free | Exact | No time at all
+	Workload: High | Manageable | Low or None
+	Company: Many friends (5 or more friends) | Few friends (1 to 4 friends) | Single
+	Hunger: Very hungry | Just right | Not really
+
+	Place: Area 2 | SC | Katipunan | Math or ASCAL stalls | Other stalls | CS or Math Canteen | Other Canteens | Maginhawa | DCS
+
+
+2. 
