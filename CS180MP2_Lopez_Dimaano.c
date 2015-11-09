@@ -202,11 +202,28 @@ void printStats(Attrib * A){
 	} while (curr != NULL);
 }
 
-void freeVariables(Dict * D, Attrib * A){
+/*void freeVariables(Dict * D, Attrib * A){
+	entryNode * curr, * alpha;
+	Entry * durr, * beta;
 
-}
+	attribNode * furr, * gamma;
+	Attrib * gurr, * delta;
 
-void readinput(Dict * D, Attrib * A){	
+	gurr = A->link;
+
+	while (1){
+		furr = 
+		alpha = furr;		
+		if (curr == NULL) break;
+		curr = curr->next;
+		free(alpha);
+	}
+
+	curr = A->link;
+
+}*/
+
+void readinput(Dict * D, Attrib * A, int ** equivalentTable){	
 	int i=0, j=0, ch;
 	char buffer[512];
 	char * medium;	
@@ -224,8 +241,12 @@ void readinput(Dict * D, Attrib * A){
 	}
 
 	initEntries(A);
+
+	equivalentTable = (int **) malloc(sizeof(int *) * 50);
 	
-	while (!feof(input)){																								//Getting actual data now.
+	while (!feof(input)){
+
+		equivalentTable[i] = (int *) malloc(sizeof(int) * A->count);																								//Getting actual data now.
 
 		curr = A->link;
 
@@ -238,15 +259,22 @@ void readinput(Dict * D, Attrib * A){
 
 		medium = strtok(buffer, ",");
 
-		j=0;		
+		j=0;
+		
 		while (medium != NULL){
-			assignAttributeEntry(curr->E, medium, assignUniqueID(D, medium));
+			equivalentTable[i][j] = assignUniqueID(D, medium);
+			assignAttributeEntry(curr->E, medium, equivalentTable[i][j]);			
 			medium = strtok(NULL, ",");	
 			curr = curr->next;
+			j++;
 		}
+
+		i++;
 	}
 
 	printStats(A);
+	printf("\n");
+	printEquivalentTable(equivalentTable, A->count);
 	
 	fclose(input);
 }
@@ -264,9 +292,9 @@ int main(){
 
 	int ** equivalentTable;
 	
-	readinput(&D, &A);
+	readinput(&D, &A, equivalentTable);
 
-	freeVariables(&D, &A);
+	//freeVariables(&D, &A);
 	
 	return 0;
 
