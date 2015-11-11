@@ -173,6 +173,17 @@ void printDict(Dict * D){
 	}
 }
 
+char * returnEquivalent(Dict * D, int index){
+
+	dNode * curr = D->top;
+
+	while (curr->index != index){
+		curr = curr->next;
+	}
+
+	return curr->entry;
+}
+
 void printEquivalentTable(int ** array, int attribute){
 	int i, j;
 	for (i=0; i<50; i++){
@@ -200,6 +211,10 @@ void printStats(Attrib * A){
 
 		curr = curr->next;
 	} while (curr != NULL);
+}
+
+void shuffleArray(int ** array){
+	
 }
 
 /*void freeVariables(Dict * D, Attrib * A){
@@ -230,19 +245,28 @@ void readinput(Dict * D, Attrib * A, int ** equivalentTable){
 
 	attribNode * curr;
 
+	equivalentTable = (int **) malloc(sizeof(int *) * 51);
+
 	input = fopen("input.csv", "r");
 
 	mygets(buffer, 512, input);																						//Get first line: Labels
 	medium = strtok(buffer, ",");
 
-	while (medium != NULL){
+	while (medium != NULL){		
 		assignAttribute(A, medium);
 		medium = strtok(NULL, ",");
 	}
 
-	initEntries(A);
+	rewind(input);
 
-	equivalentTable = (int **) malloc(sizeof(int *) * 50);
+	while (medium != NULL){
+		equivalentTable[i] = (int *) malloc(sizeof(int) * A->count);
+		equivalentTable[i][j] = assignUniqueID(D, medium);
+		medium = strtok(NULL, ",");
+		j++;
+	}
+
+	initEntries(A);	
 	
 	while (!feof(input)){
 
@@ -293,6 +317,8 @@ int main(){
 	int ** equivalentTable;
 	
 	readinput(&D, &A, equivalentTable);
+
+	printf("\n\n%s\n\n", returnEquivalent(&D, 9));
 
 	//freeVariables(&D, &A);
 	
