@@ -57,7 +57,6 @@ char * mygets(char * str, int num, FILE * stream ){																	//Sir Edge's
 	return str;
 }
 
-
 void initDict(Dict * D){
 	D->top = NULL;
 }
@@ -184,15 +183,219 @@ char * returnEquivalent(Dict * D, int index){
 	return curr->entry;
 }
 
-void printEquivalentTable(int ** array, int attribute){
+//DIEGO MADE NEW FUNCTIONS + CHANGES BETWEEN THIS COMMENT...
+//NEW FUNCTION!!! prints an entire line of entries
+void printEntryLine(int * array, int attrCount){
+	int j;
+	for (j=0; j<attrCount; j++){
+		printf("%d\t", array[j]);
+	}
+}
+
+//MODIFIED FUNCTION!!! slightly streamlined using the previous function
+void printEquivalentTable(int ** array, int attrCount){
 	int i, j;
 	for (i=0; i<50; i++){
-		for (j=0; j<attribute; j++){
-			printf("%d\t", array[i][j]);
-		}
+		printEntryLine(array[i], attrCount);
 		printf("\n");
 	}
 }
+
+//NEW FUNCTION!!! return a certain line of entries as an array
+int * getEntryLine(int ** array, int attrCount, int lineNo){
+	int * x = (int *) malloc(sizeof(int) * attrCount);
+	int j;
+
+	for(j=0; j<attrCount; j++){
+		x[j] = array[lineNo][j];
+	}
+
+	printEntryLine(x, attrCount);
+
+	return x;
+}
+
+//NEW FUNCTION!!! simply traverse through the attributes array
+void traverseAttr(Attrib A){
+	attribNode * curr = A.link;
+	entryNode * currE;
+
+	if (curr == NULL) printf("Empty Attribute List\n");
+	else {
+		while(curr != NULL){
+			printf("%s\n", curr->attributeName);
+			
+			currE = curr->E->link->next;
+			if(currE == NULL) printf("Attribute Does Not Hold Values\n");
+			else{
+				while(currE != NULL){
+					printf("\t%s\n", currE->entry);
+					currE = currE->next;
+				}
+			}
+
+			printf("\n\n");
+			curr = curr->next;	
+		}
+	}
+}
+
+//NEW FUNCTION!!! simply traverse through the (integer) attributes array
+void traverseAttrArray(Dict * D, int ** attrArray, int attrCount){
+	int i, j;
+
+	for (i = 0; i < attrCount; i++){
+		printf("ATTRIBUTE: %s\n", returnEquivalent(D, i));
+		for(j = 1; j <= attrArray[i][0]; j++) printf("\tOPTION: (%d:%d) %s\n", j, attrArray[i][j], returnEquivalent(D, attrArray[i][j]));
+		printf("\n");
+	}
+}
+
+
+//NEW FUNCTION!!! return a 2D array of Attributes and the corresponding Attribute Options
+//based off traverseAttr()
+int ** getAttrArray(Attrib A){
+	int ** array;
+	attribNode * curr = A.link;
+	entryNode * currE;
+	int attrOptionsCtr;
+	int i, index;
+
+
+	//initialize the return array
+	array = (int **) malloc(sizeof(int *) * A.count);
+
+	//verify attribute list non-emptiness
+	if (curr == NULL) printf("Empty Attribute List\n");
+	else {
+		//traverse through non-empty attribute list
+		while(curr != NULL){
+			printf("%s\n", curr->attributeName);
+			
+			//access the attribute option list
+			currE = curr->E->link->next;
+			attrOptionsCtr = 0;			
+			
+			//verify attribute option list non-emptiness
+			if(currE == NULL) printf("Attribute Does Not Hold Values\n");
+			else{
+
+				//traverse through attribute option list to count number of options
+				while(currE != NULL){
+					printf("\t[%d] %s\n", currE->equivalentValue, currE->entry);
+					currE = currE->next;
+					attrOptionsCtr++;
+				}
+
+				//get current attribute's equivalent value and simplify shit
+				index = curr->E->link->equivalentValue;
+				
+				//initialize inner array
+				array[index] = (int *) malloc((sizeof(int) * attrOptionsCtr) + 1);
+
+				//set inner array's first element to be the number of options for the attribute
+				array[index][0] = attrOptionsCtr;
+
+				//reset the currE pointer
+				currE = curr->E->link->next;
+
+				//copy the linked list's data unto the array; exiting the program if shit happens
+				for(i = 1; i <= attrOptionsCtr; i++){
+					if(currE == NULL){
+						printf("Unbound shit and shit 1\n");
+						exit(0);
+					}
+
+					array[index][i] = currE->equivalentValue;
+					//printf("| %d |", array[index][i]);
+					currE = currE -> next;
+				}
+
+				printf("\n%d\n", array[index][0]);
+
+				if(currE != NULL){
+					printf("Unbound shit and shit 2\n");
+					exit(0);
+				}
+			}
+
+			printf("\n\n");
+			curr = curr->next;	
+		}
+	}
+
+	return array;
+}
+
+
+//log base 2 function
+double log2(double x){
+	return (log(x) / log(2));
+}
+
+//calculate total number of unique attribute types
+int calculateAttrTotal(int * x){
+	int i, total = 0;
+
+	for(i = 1; i <= x[0]; i++) total = total + x[i];
+	return total;
+}
+
+//calculate for entropy
+double calculateEntropy(int * x){
+	int i;
+	double total = (double) (calculateAttrTotal(x));
+	double entropy = 0;
+
+	for(i = 1; i <= x[0]; i++) {
+		printf("%lf\n", entropy);
+		if (x[i] != 0) entropy = entropy - ((x[i]/total) * log2(x[i]/total));
+	}
+	return entropy;
+}
+
+//NEW FUNCTION!!! gets the distribution of the entries given a certain attribute and the set of entries to consider
+/*
+targetAttrArray: size of array [index 0] and array of possible target attribute options [index 1 -> size]
+set: 2d array of entries for which the distribution will be identified
+setSize: size of array of entries for which the distribution will be identified
+attrCount: number of attributes in an entry
+
+idea: pigeonhole shit
+	use for loop to iterate through all entries
+
+	if last item on entry == targetAttrArray[n] -> pigeon hole to targetAttrArray n
+		check all targetAttrArray vals
+		use another for loop to iterate for all targetAttrArray
+
+*/
+
+int * getDistribution(int * targetAttrArray, int attrCount, int ** set, int setSize){
+	//printf("%d\n", attrCount - 1);
+
+	int i, j;
+	int * x = (int *) malloc(sizeof(int) * attrCount);
+	for(i = 0; i < attrCount; i++) x[i] = 0;
+
+	x[0] = targetAttrArray[0];
+	for(j = 1; j < setSize; j++){
+		//printf("%d\n", set[j][attrCount-1]);
+		for(i = 0; i <= targetAttrArray[0]; i++) {
+		 	if(targetAttrArray[i] == set[j][attrCount-1]){
+		 		x[i]++;
+		 		break;
+		 	}
+		}
+	}
+
+	//printf("\n[");
+	for(i = 1; i <= x[0]; i++) printf(" %d ", x[i]);
+	//printf("]\n");
+
+	return x;
+}
+
+//...AND THIS COMMENT :)
 
 void printStats(Attrib * A){
 	attribNode * curr;
@@ -238,8 +441,9 @@ void shuffleArray(int ** array){
 
 }*/
 
-void readinput(Dict * D, Attrib * A, int ** equivalentTable){	
-	int i=0, j=0, ch;
+int ** readinput(Dict * D, Attrib * A){	
+	int i=0, j=0;
+	int ** equivalentTable;
 	char buffer[512];
 	char * medium;	
 
@@ -297,10 +501,11 @@ void readinput(Dict * D, Attrib * A, int ** equivalentTable){
 	}
 
 	printStats(A);
-	printf("\n");
 	printEquivalentTable(equivalentTable, A->count);
 	
 	fclose(input);
+
+	return equivalentTable;
 }
 
 
@@ -314,11 +519,38 @@ int main(){
 	Attrib A;
 	initAttrib(&A);
 
-	int ** equivalentTable;
+	int ** initialSet;
+	int ** attrArray;
+	int * dist;
+	int i;
 	
-	readinput(&D, &A, equivalentTable);
-
+	//file read and initialization
+	initialSet = readinput(&D, &A);
 	printf("\n\n%s\n\n", returnEquivalent(&D, 9));
+	
+	//start of ID3 shit supposedly
+	system("cls");
+	attrArray = getAttrArray(A);
+	system("cls");
+	traverseAttrArray(&D, attrArray, A.count);
+	system("cls");
+	//printf("\n\n%s\n\n", returnEquivalent(&D, A.count - 1));
+
+	dist = getDistribution(attrArray[A.count - 1], A.count, initialSet, 51);
+	
+	system("cls");
+	printf("DISTRIBUTION: \n");	
+	for (i = 1; i <= dist[0]; i++){
+		printf("\t%d >> %s\n", dist[i], returnEquivalent(&D, attrArray[A.count - 1][i]));
+	}
+
+	//get entropy
+	system("cls");
+	int zzz[3] = {2, 9, 5}; 
+	printf("%lf\n\n", calculateEntropy(zzz));
+	printf("%lf\n", calculateEntropy(dist));
+	
+	//getEntryLine(initialSet, A.count, 1);
 
 	//freeVariables(&D, &A);
 	
