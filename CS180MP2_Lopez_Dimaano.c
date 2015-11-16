@@ -4,6 +4,7 @@
 #include <string.h>
 
 
+
 FILE * input;
 
 
@@ -185,6 +186,20 @@ char * returnEquivalent(Dict * D, int index){
 
 //DIEGO MADE NEW FUNCTIONS + CHANGES BETWEEN THIS COMMENT...
 //NEW FUNCTION!!! prints an entire line of entries
+int * initConsiderArray(int numOfEntries){
+	int i;
+	int * array = (int *) malloc(sizeof(int) * numOfEntries + 1);
+	array[0] = numOfEntries;
+	
+	for(i=1; i<=numOfEntries; i++){
+		array[i] = 1;
+	}
+
+	return array;
+}
+
+
+//NEW FUNCTION!!! prints an entire line of entries
 void printEntryLine(int * array, int attrCount){
 	int j;
 	for (j=0; j<attrCount; j++){
@@ -329,8 +344,8 @@ int ** getAttrArray(Attrib A){
 
 
 //log base 2 function
-double log2(double x){
-	return (log(x) / log(2));
+double logx(double x, int base){
+	return (double) (log(x) / log(base));
 }
 
 //calculate total number of unique attribute types
@@ -349,7 +364,7 @@ double calculateEntropy(int * x){
 
 	for(i = 1; i <= x[0]; i++) {
 		printf("%lf\n", entropy);
-		if (x[i] != 0) entropy = entropy - ((x[i]/total) * log2(x[i]/total));
+		if (x[i] != 0) entropy = entropy - ((x[i]/total) * logx(x[i]/total, x[0]));
 	}
 	return entropy;
 }
@@ -370,7 +385,7 @@ idea: pigeonhole shit
 
 */
 
-int * getDistribution(int * targetAttrArray, int attrCount, int ** set, int setSize){
+int * getDistribution(int * targetAttrArray, int attrCount, int ** set, int setSize, int * considerArray){
 	//printf("%d\n", attrCount - 1);
 
 	int i, j;
@@ -380,11 +395,13 @@ int * getDistribution(int * targetAttrArray, int attrCount, int ** set, int setS
 	x[0] = targetAttrArray[0];
 	for(j = 1; j < setSize; j++){
 		//printf("%d\n", set[j][attrCount-1]);
-		for(i = 0; i <= targetAttrArray[0]; i++) {
-		 	if(targetAttrArray[i] == set[j][attrCount-1]){
-		 		x[i]++;
-		 		break;
-		 	}
+		if(considerArray[j] == 1){
+			for(i = 0; i <= targetAttrArray[0]; i++) {
+				if(targetAttrArray[i] == set[j][attrCount-1]){
+			 		x[i]++;
+			 		break;
+			 	}
+			}
 		}
 	}
 
@@ -394,6 +411,12 @@ int * getDistribution(int * targetAttrArray, int attrCount, int ** set, int setS
 
 	return x;
 }
+
+// //calculate for information gain
+// double calculateGain(int ** attrArray, int attrCount, int ** set, int setSize, int * availableAttr, int classifierAttr, int considerArray){
+// 	int i;
+// 	int * initialDist = getDistribution(attrArray[attrCount - 1], attrCount, set);
+// }
 
 //...AND THIS COMMENT :)
 
@@ -521,6 +544,7 @@ int main(){
 
 	int ** initialSet;
 	int ** attrArray;
+	int * considerArray;
 	int * dist;
 	int i;
 	
@@ -536,23 +560,24 @@ int main(){
 	system("cls");
 	//printf("\n\n%s\n\n", returnEquivalent(&D, A.count - 1));
 
-	dist = getDistribution(attrArray[A.count - 1], A.count, initialSet, 51);
-	
+	considerArray = initConsiderArray(51);
+	dist = getDistribution(attrArray[A.count - 1], A.count, initialSet, 51, considerArray);
+
 	system("cls");
 	printf("DISTRIBUTION: \n");	
 	for (i = 1; i <= dist[0]; i++){
 		printf("\t%d >> %s\n", dist[i], returnEquivalent(&D, attrArray[A.count - 1][i]));
 	}
 
-	//get entropy
-	system("cls");
-	int zzz[3] = {2, 9, 5}; 
-	printf("%lf\n\n", calculateEntropy(zzz));
-	printf("%lf\n", calculateEntropy(dist));
+	// //get entropy
+	// system("cls");
+	// int zzz[3] = {2, 2, 0}; 
+	// printf("%lf\n\n", calculateEntropy(zzz));
+	// printf("%lf\n", calculateEntropy(dist));
 	
-	//getEntryLine(initialSet, A.count, 1);
+	// //getEntryLine(initialSet, A.count, 1);
 
-	//freeVariables(&D, &A);
+	// //freeVariables(&D, &A);
 	
 	return 0;
 
