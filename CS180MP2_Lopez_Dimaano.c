@@ -352,10 +352,6 @@ double logx(double x, int base){
 	return (double) (log(x) / log(base));
 }
 
-double logbase(double x, double base){
-	return (log(x) / log(base));
-}
-
 int numberOfClassifications(Attrib * A){
 	attribNode * curr;
 
@@ -383,13 +379,8 @@ double calculateEntropy(int * x){
 	double entropy = 0;
 
 	for(i = 1; i <= x[0]; i++) {
-<<<<<<< HEAD
-		printf("-%lf-\n", entropy);
-		if (x[i] != 0) entropy = entropy - ((x[i]/total) * logbase(x[i]/total, 6));
-=======
 		// printf("%lf\n", entropy);
 		if (x[i] != 0) entropy = entropy - ((x[i]/total) * logx(x[i]/total, x[0]));
->>>>>>> origin/master
 	}
 	return entropy;
 }
@@ -615,62 +606,34 @@ int main(){
 	initialSet = readinput(&D, &A);
 	printf("\n\n%s\n\n", returnEquivalent(&D, 9));
 	
-	//start of ID3 shit supposedly
-<<<<<<< HEAD
-	system("pause");
-	attrArray = getAttrArray(A);
-	system("pause");
-	traverseAttrArray(&D, attrArray, A.count);
-	system("pause");
-	//printf("\n\n%s\n\n", returnEquivalent(&D, A.count - 1));
 
-	dist = getDistribution(attrArray[A.count - 1], A.count, initialSet, 51);
-	
-	system("pause");
-=======
-	// system("cls");
-	attrArray = getAttrArray(A);
-	// system("cls");
-	traverseAttrArray(&D, attrArray, A.count);
-	// system("cls");
+	attrArray = getAttrArray(A);	
+	traverseAttrArray(&D, attrArray, A.count);	
 
 	considerArray = initArray(50);
 	availableAttr = initArray(A.count);
 	dist = getDistribution(attrArray[A.count - 1], A.count, initialSet, 51, considerArray);
 
-
-	//PRINT DISTRIBUTION TEST
-	// system("cls");
->>>>>>> origin/master
 	printf("DISTRIBUTION: \n");	
 	for (i = 1; i <= dist[0]; i++){
 		printf("\t%d >> %s\n", dist[i], returnEquivalent(&D, attrArray[A.count - 1][i]));
 	}
 
-<<<<<<< HEAD
-	//get entropy
 	system("pause");
-	int zzz[3] = {2, 9, 5}; 
+
+	int zzz[5] = {4, 2, 0, 0, 0}; 
 	printf("%lf\n\n", calculateEntropy(zzz));
-	printf("LOOOOOL\n");
 	printf("%lf\n", calculateEntropy(dist));
-=======
-	//ENTROPY TEST
-	// system("cls");
-	// int zzz[5] = {4, 2, 0, 0, 0}; 
-	// printf("%lf\n\n", calculateEntropy(zzz));
-	// printf("%lf\n", calculateEntropy(dist));
 
 	//RECONSIDER TEST
-	// printf("\n\n%s\n\n", returnEquivalent(&D, 0));
-	// int * newarray = reconsiderArray(initialSet, 51, considerArray, 0, 9);
->>>>>>> origin/master
-	
+	printf("\n\n%s\n\n", returnEquivalent(&D, 0));
+	int * newarray = reconsiderArray(initialSet, 51, considerArray, 0, 9);
+
 
 	//GAIN TEST
 	calculateGain(attrArray, A.count, initialSet, 51, considerArray, 0);
 
-	// getEntryLine(initialSet, A.count, 1);
+	getEntryLine(initialSet, A.count, 1);
 
 	// freeVariables(&D, &A);
 	
