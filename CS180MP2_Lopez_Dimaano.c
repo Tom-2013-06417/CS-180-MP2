@@ -30,6 +30,7 @@ struct attributeEntryNode{
 typedef struct entry Entry;
 struct entry{
 	entryNode * link;
+	int count;
 };
 
 typedef struct attributeNode attribNode;
@@ -170,6 +171,10 @@ void printDict(Dict * D){
 		if (curr->next == NULL) break;
 		curr = curr->next;
 	}
+}
+
+void incrementEntryCount(Entry * E){
+	E->count++;
 }
 
 char * returnEquivalent(Dict * D, int index){
@@ -333,6 +338,22 @@ double log2(double x){
 	return (log(x) / log(2));
 }
 
+double logbase(double x, double base){
+	return (log(x) / log(base));
+}
+
+int numberOfClassifications(Attrib * A){
+	attribNode * curr;
+
+	curr = A->link;
+
+	while (curr->next != NULL){
+		curr = curr->next;
+	}
+
+	return curr->E->count;
+}
+
 //calculate total number of unique attribute types
 int calculateAttrTotal(int * x){
 	int i, total = 0;
@@ -348,8 +369,8 @@ double calculateEntropy(int * x){
 	double entropy = 0;
 
 	for(i = 1; i <= x[0]; i++) {
-		printf("%lf\n", entropy);
-		if (x[i] != 0) entropy = entropy - ((x[i]/total) * log2(x[i]/total));
+		printf("-%lf-\n", entropy);
+		if (x[i] != 0) entropy = entropy - ((x[i]/total) * logbase(x[i]/total, 6));
 	}
 	return entropy;
 }
@@ -438,11 +459,10 @@ void shuffleArray(int ** array){
 	}
 
 	curr = A->link;
-
 }*/
 
 int ** readinput(Dict * D, Attrib * A){	
-	int i=0, j=0;
+	int i=0, j=0, attribCount=0;
 	int ** equivalentTable;
 	char buffer[512];
 	char * medium;	
@@ -459,16 +479,17 @@ int ** readinput(Dict * D, Attrib * A){
 	while (medium != NULL){		
 		assignAttribute(A, medium);
 		medium = strtok(NULL, ",");
+		attribCount++;
 	}
 
 	rewind(input);
 
-	while (medium != NULL){
+/*	while (medium != NULL){
 		equivalentTable[i] = (int *) malloc(sizeof(int) * A->count);
 		equivalentTable[i][j] = assignUniqueID(D, medium);
 		medium = strtok(NULL, ",");
 		j++;
-	}
+	}*/
 
 	initEntries(A);	
 	
@@ -529,25 +550,26 @@ int main(){
 	printf("\n\n%s\n\n", returnEquivalent(&D, 9));
 	
 	//start of ID3 shit supposedly
-	system("cls");
+	system("pause");
 	attrArray = getAttrArray(A);
-	system("cls");
+	system("pause");
 	traverseAttrArray(&D, attrArray, A.count);
-	system("cls");
+	system("pause");
 	//printf("\n\n%s\n\n", returnEquivalent(&D, A.count - 1));
 
 	dist = getDistribution(attrArray[A.count - 1], A.count, initialSet, 51);
 	
-	system("cls");
+	system("pause");
 	printf("DISTRIBUTION: \n");	
 	for (i = 1; i <= dist[0]; i++){
 		printf("\t%d >> %s\n", dist[i], returnEquivalent(&D, attrArray[A.count - 1][i]));
 	}
 
 	//get entropy
-	system("cls");
+	system("pause");
 	int zzz[3] = {2, 9, 5}; 
 	printf("%lf\n\n", calculateEntropy(zzz));
+	printf("LOOOOOL\n");
 	printf("%lf\n", calculateEntropy(dist));
 	
 	//getEntryLine(initialSet, A.count, 1);
