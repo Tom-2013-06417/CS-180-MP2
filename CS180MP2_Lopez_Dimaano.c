@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 
 
 
@@ -45,6 +46,11 @@ typedef struct attribute Attrib;
 struct attribute{
 	attribNode * link;
 	int count;
+};
+
+typedef struct testnode TestNode;
+struct testnode{
+
 };
 
 
@@ -496,6 +502,10 @@ void shuffleArray(int ** array){
 	
 }
 
+void selectTrainingSamples(int ** inputArray, int ** targetArray){
+
+}
+
 /*void freeVariables(Dict * D, Attrib * A){
 	entryNode * curr, * alpha;
 	Entry * durr, * beta;
@@ -601,6 +611,8 @@ int main(){
 	int * availableAttr;
 	int * dist;
 	int i;
+
+	srand(time(NULL));
 	
 	//file read and initialization
 	initialSet = readinput(&D, &A);
