@@ -55,6 +55,50 @@ struct testnode{
 
 
 
+//Code retrieved from http://stackoverflow.com/questions/5064379/generating-unique-random-numbers-in-c
+
+#define ERR_NO_NUM -1
+#define ERR_NO_MEM -2
+
+int myRandom (int size) {
+	int i, n;
+	static int numNums = 0;
+	static int *numArr = NULL;
+
+	// Initialize with a specific size.
+
+	if (size >= 0) {
+		if (numArr != NULL)
+			free (numArr);
+		if ((numArr = (int * )malloc (sizeof(int) * (size))) == NULL)
+			return ERR_NO_MEM;
+		for (i = 0; i  < size; i++)
+			numArr[i] = i;
+		numNums = size;
+	}
+
+	// Error if no numbers left in pool.
+
+	if (numNums == 0)
+	   return ERR_NO_NUM;
+
+	// Get random number from pool and remove it (rnd in this
+	// case returns a number between 0 and numNums-1 inclusive).
+
+	n = rand() % numNums;
+	i = numArr[n];
+	numArr[n] = numArr[numNums-1];
+	numNums--;
+	if (numNums == 0) {
+		free (numArr);
+		numArr = 0;
+	}
+
+	return i;
+}
+
+
+
 char * mygets(char * str, int num, FILE * stream ){																	//Sir Edge's code for fgets() without the \n thingy (from CS 11)...
 	fgets(str, num, stream);
 	
@@ -195,6 +239,7 @@ char * returnEquivalent(Dict * D, int index){
 	return curr->entry;
 }
 
+
 //DIEGO MADE NEW FUNCTIONS + CHANGES BETWEEN THIS COMMENT...
 //NEW FUNCTION!!! initializes an array of indicated size + 1, size of array noted at 0th index
 int * initArray(int size){
@@ -218,9 +263,9 @@ void printEntryLine(int * array, int attrCount){
 }
 
 //MODIFIED FUNCTION!!! slightly streamlined using the previous function
-void printEquivalentTable(int ** array, int attrCount){
+void printEquivalentTable(int ** array, int attrCount, int count){
 	int i, j;
-	for (i=0; i<50; i++){
+	for (i=0; i<count; i++){
 		printEntryLine(array[i], attrCount);
 		printf("\n");
 	}
@@ -420,9 +465,9 @@ int * getDistribution(int * targetAttrArray, int attrCount, int ** entrySet, int
 		if(considerArray[j] == 1){
 			for(i = 0; i <= targetAttrArray[0]; i++) {
 				if(targetAttrArray[i] == entrySet[j][attrCount-1]){
-			 		x[i]++;
-			 		break;
-			 	}
+					x[i]++;
+					break;
+				}
 			}
 		}
 	}
@@ -463,7 +508,7 @@ double calculateGain(int ** attrArray, int attrCount, int ** entrySet, int entry
 	// 	                          reconsiderArray(entrySet, entrySetSize, considerArray, classifierAttr, attrArray[classifierAttr][1]));
 
 	subDist[2] = getDistribution(attrArray[attrCount - 1], attrCount, entrySet, entrySetSize, 
-		                          reconsiderArray(entrySet, entrySetSize, considerArray, classifierAttr, attrArray[classifierAttr][2]));
+								  reconsiderArray(entrySet, entrySetSize, considerArray, classifierAttr, attrArray[classifierAttr][2]));
 
 	// for (i = 1; i <= attrArray[classifierAttr][0]; i++){
 	// 	subDist[i] = getDistribution(attrArray[attrCount - 1], attrCount, entrySet, entrySetSize, 
@@ -478,6 +523,7 @@ double calculateGain(int ** attrArray, int attrCount, int ** entrySet, int entry
 }
 
 // ...AND THIS COMMENT :)
+
 
 void printStats(Attrib * A){
 	attribNode * curr;
@@ -498,12 +544,33 @@ void printStats(Attrib * A){
 	} while (curr != NULL);
 }
 
-void shuffleArray(int ** array){
-	
+void selectTestSamples(int ** targetArray){
+
 }
 
-void selectTrainingSamples(int ** inputArray, int ** targetArray){
+void selectTrainingSamples(int ** inputArray, int ** trainingSamplesArray, int ** testSamplesArray, int cols){
+	int i, j, k, counter=0;
 
+	//srand (time (NULL));
+	i = myRandom (51);
+
+	for (j=0; j<30; j++){
+		if (i == 0)	i = myRandom (-1);
+		printf("%d\n", i);
+		for (k=0; k<cols; k++){
+			trainingSamplesArray[j][k] = inputArray[i][k];
+		}
+		i = myRandom (-1);
+	}
+
+	for (j=0; j<20; j++){
+		if (i == 0) i = myRandom (-1);
+		printf("%d\n", i);
+		for (k=0; k<cols; k++){
+			testSamplesArray[j][k] = inputArray[i][k];
+		}
+		i = myRandom (-1);
+	}
 }
 
 /*void freeVariables(Dict * D, Attrib * A){
@@ -587,7 +654,7 @@ int ** readinput(Dict * D, Attrib * A){
 	}
 
 	printStats(A);
-	printEquivalentTable(equivalentTable, A->count);
+	printEquivalentTable(equivalentTable, A->count, 51);
 	
 	fclose(input);
 
@@ -607,17 +674,41 @@ int main(){
 
 	int ** initialSet;
 	int ** attrArray;
+
+	int ** trainingSamplesArray;
+	int ** testSamplesArray;
+
 	int * considerArray;
 	int * availableAttr;
 	int * dist;
 	int i;
+
+	int m; //seemingly unimportant counter variables for the for loops of the training and test arrays
 
 	srand(time(NULL));
 	
 	//file read and initialization
 	initialSet = readinput(&D, &A);
 	printf("\n\n%s\n\n", returnEquivalent(&D, 9));
-	
+
+	trainingSamplesArray = (int **) malloc (sizeof (int *) * 30);
+	testSamplesArray = (int **) malloc (sizeof (int *) * 20);
+
+	for (m=0; m<30; m++){
+		trainingSamplesArray[m] = (int *) malloc(sizeof (int) * A.count);
+	}
+
+	for (m=0; m<20; m++){
+		testSamplesArray[m] = (int *) malloc(sizeof (int) * A.count);
+	}
+
+	selectTrainingSamples(initialSet, trainingSamplesArray, testSamplesArray, A.count);							//Function to return randomly sampled training and test samples!
+
+	system("pause");
+	printEquivalentTable(trainingSamplesArray, A.count, 30);
+	system("pause");
+	printEquivalentTable(testSamplesArray, A.count, 20);
+	system("pause");
 
 	attrArray = getAttrArray(A);	
 	traverseAttrArray(&D, attrArray, A.count);	
