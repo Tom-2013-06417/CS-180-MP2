@@ -97,8 +97,6 @@ int myRandom (int size) {
 	return i;
 }
 
-
-
 char * mygets(char * str, int num, FILE * stream ){																	//Sir Edge's code for fgets() without the \n thingy (from CS 11)...
 	fgets(str, num, stream);
 	
@@ -224,10 +222,6 @@ void printDict(Dict * D){
 	}
 }
 
-void incrementEntryCount(Entry * E){
-	E->count++;
-}
-
 char * returnEquivalent(Dict * D, int index){
 
 	dNode * curr = D->top;
@@ -248,7 +242,7 @@ int * initArray(int size){
 	array[0] = size;
 	
 	for(i=1; i<=size; i++){
-		array[i] = 1;
+		array[i] = 0;
 	}
 
 	return array;
@@ -519,7 +513,6 @@ double calculateGain(int ** attrArray, int attrCount, int ** entrySet, int entry
 	for (xy = 1; xy <= subDist[2][0]; xy++){
 		printf("\t%d >> %d\n", subDist[2][xy], attrArray[attrCount - 1][xy]);
 	}
-
 }
 
 // ...AND THIS COMMENT :)
@@ -544,31 +537,28 @@ void printStats(Attrib * A){
 	} while (curr != NULL);
 }
 
-void selectTestSamples(int ** targetArray){
+void printConsiderArray(int * considerArray, int size){
+	int i;
+
+	for (i=0; i<size; i++){
+		printf("%d ", considerArray[i]);
+	}
 
 }
 
-void selectTrainingSamples(int ** inputArray, int ** trainingSamplesArray, int ** testSamplesArray, int cols){
-	int i, j, k, counter=0;
+void selectTrainingSamples(int ** inputArray, int * trainingSamplesConsiderArray){
+	int i, j, counter=0;
 
 	//srand (time (NULL));
 	i = myRandom (51);
 
-	for (j=0; j<30; j++){
+	for (j=1; j<=30; j++){
 		if (i == 0)	i = myRandom (-1);
-		printf("%d\n", i);
-		for (k=0; k<cols; k++){
-			trainingSamplesArray[j][k] = inputArray[i][k];
-		}
-		i = myRandom (-1);
-	}
-
-	for (j=0; j<20; j++){
-		if (i == 0) i = myRandom (-1);
-		printf("%d\n", i);
-		for (k=0; k<cols; k++){
-			testSamplesArray[j][k] = inputArray[i][k];
-		}
+		trainingSamplesConsiderArray[i] = 1;
+		//printf("%d\n", i);
+		// for (k=0; k<cols; k++){
+		// 	trainingSamplesArray[j][k] = inputArray[i][k];
+		// }
 		i = myRandom (-1);
 	}
 }
@@ -616,7 +606,7 @@ int ** readinput(Dict * D, Attrib * A){
 
 	rewind(input);
 
-/*	while (medium != NULL){
+	/*	while (medium != NULL){
 		equivalentTable[i] = (int *) malloc(sizeof(int) * A->count);
 		equivalentTable[i][j] = assignUniqueID(D, medium);
 		medium = strtok(NULL, ",");
@@ -675,68 +665,104 @@ int main(){
 	int ** initialSet;
 	int ** attrArray;
 
-	int ** trainingSamplesArray;
-	int ** testSamplesArray;
+	int * trainingSamplesArray;
+	int * testSamplesArray;
 
 	int * considerArray;
 	int * availableAttr;
 	int * dist;
-	int i;
-
-	int m; //seemingly unimportant counter variables for the for loops of the training and test arrays
+	int i, m;  //m is seemingly an unimportant counter variables for the for loops of the training and test arrays
 
 	srand(time(NULL));
 	
 	//file read and initialization
 	initialSet = readinput(&D, &A);
-	printf("\n\n%s\n\n", returnEquivalent(&D, 9));
+	//printf("\n\n%s\n\n", returnEquivalent(&D, 9));
 
-	trainingSamplesArray = (int **) malloc (sizeof (int *) * 30);
-	testSamplesArray = (int **) malloc (sizeof (int *) * 20);
+	// for (m=0; m<30; m++){
+	// 	trainingSamplesArray[m] = (int *) malloc(sizeof (int) * A.count);
+	// }
 
-	for (m=0; m<30; m++){
-		trainingSamplesArray[m] = (int *) malloc(sizeof (int) * A.count);
+	// for (m=0; m<20; m++){
+	// 	testSamplesArray[m] = (int *) malloc(sizeof (int) * A.count);
+	// }
+
+
+
+	//Start k-fold cross validation, where k = 5
+	///////////////////////////////////////////////////////////////////////////////////
+
+	for (m=0; m<5; m++){
+
+		considerArray = initArray(50);
+
+		selectTrainingSamples(initialSet, considerArray);							//Function to return randomly sampled training and test samples!
+		//printConsiderArray(considerArray, 51);
+
+		// system("pause");
+		// printEquivalentTable(trainingSamplesArray, A.count, 30);
+		// system("pause");
+		// printEquivalentTable(testSamplesArray, A.count, 20);
+		// system("pause");
+
+		attrArray = getAttrArray(A);	
+		traverseAttrArray(&D, attrArray, A.count);	
+		
+		availableAttr = initArray(A.count);
+		dist = getDistribution(attrArray[A.count - 1], A.count, initialSet, 51, considerArray);
+
+		printf("DISTRIBUTION: \n");	
+		for (i = 1; i <= dist[0]; i++){
+			printf("\t%d >> %s\n", dist[i], returnEquivalent(&D, attrArray[A.count - 1][i]));
+		}
+
+		//system("pause");
+
+		int zzz[5] = {4, 2, 0, 0, 0}; 
+		printf("%lf\n\n", calculateEntropy(zzz));
+		printf("%lf\n", calculateEntropy(dist));
+
+		//RECONSIDER TEST
+		printf("\n\n%s\n\n", returnEquivalent(&D, 0));
+		int * newarray = reconsiderArray(initialSet, 51, considerArray, 0, 9);
+
+
+		//GAIN TEST
+		calculateGain(attrArray, A.count, initialSet, 51, considerArray, 0);
+
+		getEntryLine(initialSet, A.count, 1);
+
 	}
 
-	for (m=0; m<20; m++){
-		testSamplesArray[m] = (int *) malloc(sizeof (int) * A.count);
-	}
 
-	selectTrainingSamples(initialSet, trainingSamplesArray, testSamplesArray, A.count);							//Function to return randomly sampled training and test samples!
-
-	system("pause");
-	printEquivalentTable(trainingSamplesArray, A.count, 30);
-	system("pause");
-	printEquivalentTable(testSamplesArray, A.count, 20);
-	system("pause");
-
-	attrArray = getAttrArray(A);	
-	traverseAttrArray(&D, attrArray, A.count);	
-
-	considerArray = initArray(50);
-	availableAttr = initArray(A.count);
-	dist = getDistribution(attrArray[A.count - 1], A.count, initialSet, 51, considerArray);
-
-	printf("DISTRIBUTION: \n");	
-	for (i = 1; i <= dist[0]; i++){
-		printf("\t%d >> %s\n", dist[i], returnEquivalent(&D, attrArray[A.count - 1][i]));
-	}
-
-	system("pause");
-
-	int zzz[5] = {4, 2, 0, 0, 0}; 
-	printf("%lf\n\n", calculateEntropy(zzz));
-	printf("%lf\n", calculateEntropy(dist));
-
-	//RECONSIDER TEST
-	printf("\n\n%s\n\n", returnEquivalent(&D, 0));
-	int * newarray = reconsiderArray(initialSet, 51, considerArray, 0, 9);
+	///////////////////////////////////////////////////////////////////////////////////
+	//End of K-fold cross validation
 
 
-	//GAIN TEST
-	calculateGain(attrArray, A.count, initialSet, 51, considerArray, 0);
 
-	getEntryLine(initialSet, A.count, 1);
+
+	//////////////////FREE THE USED ARRAYS FROM THE FIRST EXPERIMENT///////////////////
+
+
+	// for (m=0; m<30; m++){
+	// 	free(trainingSamplesArray[m]);
+	// }
+
+	// for (m=0; m<20; m++){
+	// 	free(testSamplesArray[m]);
+	// }
+
+	////////////////END FREE THE USED ARRAYS FROM THE FIRST EXPERIMENT/////////////////
+
+
+
+
+
+	/////////////////////START EXPERIMENT NUMBER 2: LESS SAMPLES///////////////////////
+
+
+
+
 
 	// freeVariables(&D, &A);
 	
