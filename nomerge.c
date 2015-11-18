@@ -48,18 +48,13 @@ struct attribute{
 };
 
 
-typedef struct decisionTreeNodeInfo treeNodeInfo;
-struct decisionTreeNodeInfo{
-	int nodeAttrib;
-	int terminalFlag;
-};
-
 typedef struct decisionTreeNode treeNode;
 struct decisionTreeNode{
-	int pathChoice;
-	treeNodeInfo * info;
-	struct decisionTreeNode * successor;
-	struct decisionTreeNode * next;
+	int attrib;
+	int terminalFlag;
+	int numPaths;
+	int * pathChoice;
+	struct decisionTreeNode ** path;
 };
 
 
@@ -468,7 +463,7 @@ double calculateGain(int ** attrArray, int attrCount, int ** entrySet, int entry
 	double entropy;
 	double gain = calculateEntropy(initialDist);
 
-	printf("\nCalculating gain at attribute %s\n   Entropy: %lf\n", returnEquivalent(&D, classifierAttr),  gain);
+	// printf("\nCalculating gain at attribute %s\n   Entropy: %lf\n", returnEquivalent(&D, classifierAttr),  gain);
 
 	for (i = 1; i <= attrArray[classifierAttr][0]; i++){
 		subDist = getDistribution(attrArray[attrCount - 1], attrCount, entrySet, entrySetSize, 
@@ -510,60 +505,53 @@ int selectDeciderAttr(int ** attrArray, int attrCount, int ** entrySet, int entr
 	double gain = -10000, maxGain = -10000;
 	int maxGainAttr = -1;
 
-	printf("Selecting the decider attribute\n");
+	// printf("Selecting the decider attribute\n");
 	for(i = 0; i < attrCount - 1; i++){
 		//printf("at %d: %d\n", i, availableAttr[i]);
 		if(availableAttr[i] == 1){
 			gain = calculateGain(attrArray, attrCount, entrySet, entrySetSize, considerArray, i);
-			printf("   %d Gain: %lf\n", i, gain);
+			// printf("   %d Gain: %lf\n", i, gain);
 
 			if (gain > maxGain){
 				maxGain = gain;
 				maxGainAttr = i;	
-				printf("   Current Max Gain at %d\n", i);
+				// printf("   Current Max Gain at %d\n", i);
 			} 
 		}
 	}
 
-	printf("\nMost gain %lf at attribute %s\n", maxGain, returnEquivalent(&D, maxGainAttr));
+	// printf("\nMost gain %lf at attribute %s\n", maxGain, returnEquivalent(&D, maxGainAttr));
 
 	return maxGainAttr;
 }
 
 treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entrySetSize, int * considerArray, int * availableAttr){
-	printf("\n");
-	printf("FLAG\n");
 	//initialize the node
-	treeNodeInfo * info = (treeNodeInfo *) malloc(sizeof(treeNodeInfo));
-	info->nodeAttrib = -1;
-	info->terminalFlag = 0;
-
 	treeNode * node = (treeNode *) malloc(sizeof(treeNode)); 
-	node->pathChoice = -1;
-	node->info = info;
-	node->successor = NULL;
-	node->next = NULL;
-
+	node->attrib = 0;
+	node->terminalFlag = 0;
+	node->numPaths = 0;
+	node->pathChoice = NULL;
+	node->path = NULL;
 
 	int i, j;
+	int flag = 0;
+	int currentMax, currentMaxIndex;
 	int * currentDist = getDistribution(attrArray[attrCount - 1], attrCount, entrySet, entrySetSize, considerArray);
-	printf("Distribution: [");
+	int numTarget = currentDist[0];
+	
+	printf("Distribution  : [");
 	for(i=1; i<=attrArray[attrCount - 1][0]; i++){
 		printf(" %d ", currentDist[i]);
 	}
 	printf("]\n");
-	// int limit = attrArray[attrCount - 1][0];
-	// int currentDist[4] = {3, 5, 1, 3};
-	int limit = currentDist[0];
-	int flag = 0;
-	int currentMax, currentMaxIndex;
 
 	//CASE 1: Grouped into one option ang lahat ng remaining cases
-	for(i=1; i<=limit; i++){
+	for(i=1; i<=numTarget; i++){
 		if (flag != 0) flag = -1;
 		if(currentDist[i] != 0){
 			flag = 0;
-			for(j=1; j<=limit; j++){
+			for(j=1; j<=numTarget; j++){
 				if (i == j) break;
 				if (currentDist[j] != 0){
 					flag++;
@@ -574,10 +562,9 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 	}
 
 	if (flag == 0){
-		for (i = 1; i <= limit; i++) if(currentDist[i] != 0) break;
-		info->nodeAttrib = i;
-		info->terminalFlag = 1;
-		printf("\nReached Leaf Node! All entries can be classified to target %s with %d instances\n", returnEquivalent(&D, node->info->nodeAttrib), currentDist[node->info->nodeAttrib]);
+		for (i = 1; i <= numTarget; i++) if(currentDist[i] != 0) break;
+		node->attrib = attrArray[attrCount - 1][i];
+		node->terminalFlag = 1;
 		return node;	
 	} 
 
@@ -595,46 +582,61 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 	if (flag == 0){
 		currentMax = currentDist[1];
 		currentMaxIndex = 1;
-		for(i = 2; i <= limit; i++){
+		for(i = 2; i <= numTarget; i++){
 			if (currentDist[i] > currentMax){
 				currentMax = currentDist[i];
 				currentMaxIndex = i;
 			} 
 		}
 
-		info->nodeAttrib = currentMaxIndex;
-		info->terminalFlag = 1;
-		printf("\nReached Leaf Node! No more unused attributes remaining; taking the majority target %d with %d instances\n", node->info->nodeAttrib, currentMax);
+		node->attrib = currentMaxIndex;
+		node->terminalFlag = 1;
 		return node;
-
 	}	
 
 
 
 	//OTHERWISE SEGMENT
 	int decider = selectDeciderAttr(attrArray, attrCount, entrySet, entrySetSize, considerArray, availableAttr);
-	node->info->nodeAttrib = decider;	
+	node->attrib = decider;	
 	
 	int * newAvailableAttr = (int *) malloc(sizeof(int)*attrCount); 
 	for(i=0; i<attrCount; i++) newAvailableAttr[i] = availableAttr[i];
 	newAvailableAttr[decider] = 0;
 
-	printf("Building the subtree with attribute %s as the node\n", returnEquivalent(&D, node->info->nodeAttrib));
-	
-	// int newEntryArray[4] = {3, 0, 0, 0};
 	int * newEntryArray = (int *)malloc(sizeof(int) * (entrySetSize+1));
-	treeNode * curr;
-	curr = NULL;
-	char c;
+	
+	treeNode * curr = NULL;
 
-	for (i = 1; i <= attrArray[decider][0]; i++){
+	treeNode * temp = (treeNode *)malloc(sizeof(treeNode));
+	temp->attrib = 0;
+	temp->terminalFlag = 0;
+	temp->numPaths = 0;
+	temp->pathChoice = NULL;
+	temp->path = NULL;
+	
+	int numAttr = attrArray[decider][0];
+	int d;
+	node->path = (treeNode **)malloc(sizeof(treeNode*)* (numAttr+1));
+	for(d = 0; d<= numAttr; d++) node->path[d] = NULL;
 
-		node->pathChoice = attrArray[decider][i]; 
-		printf("Augmenting with path %s\n", returnEquivalent(&D, node->pathChoice));
-		newEntryArray = reconsiderArray(entrySet, entrySetSize, considerArray, decider, attrArray[decider][i]);
+	node->pathChoice = (int *)malloc(sizeof(int) * (numAttr+1));
+	node->pathChoice[0] = numAttr;
+	
+	for (d = 1; d <= numAttr; d++){
 
-
+		node->pathChoice[d] = attrArray[decider][d]; 
 		
+		printf("Ramification  : \"%s\" under \"%s\" (%d out of %d)\n", returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, decider), d, numAttr);
+		newEntryArray = reconsiderArray(entrySet, entrySetSize, considerArray, decider, attrArray[decider][d]);
+
+		printf("Entries:\n[\n");
+		for(j=1; j <51; j++){
+			printf(" %d ", newEntryArray[j]);
+			if(j%10 == 0) printf("\n");
+		}
+		printf("]\n");
+
 		flag = 0;
 		for (j = 1; j < entrySetSize; j++){
 			if(newEntryArray[j] != 0){
@@ -644,52 +646,35 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 		}
 
 		if(flag == 0){
-			currentMax = currentDist[1];
+			currentMax = currentDist[1]; 
 			currentMaxIndex = 1;
-			for (j = 2; j <= limit; j++){
+			for (j = 2; j <= numTarget; j++){
 				if(currentDist[j] > currentMax){
 					currentMax = currentDist[j];
 					currentMaxIndex = j;
 				}
 			}		
 
-			info->nodeAttrib = attrArray[decider][currentMaxIndex];
-			printf("No attribute found under %d classification %d\n", node->info->nodeAttrib, node->pathChoice);
-			info->terminalFlag = 1;
+			printf("MAX: %d\n", currentMax);
 
-			if (curr == NULL){
-				curr = node;
-				curr->next = NULL;
-			}
+			temp->attrib = attrArray[decider][currentMaxIndex];
+			temp->terminalFlag = 1;
+			node->path[d] = temp;
+			printf("Classification: Attribute \"%s\" --- \"%s\" ---> Goes To \"%s\"\n", returnEquivalent(&D, node->attrib), returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, temp->attrib));
 
-			else{
-				curr->next = node;
-				curr = curr->next;
-				curr->next = NULL;
-			}
-
-			return node;
 		}
 
 		else{
-			node->successor = buildTree(attrArray, attrCount, entrySet, entrySetSize, newEntryArray, newAvailableAttr);
-
-			if (curr == NULL){
-				curr = node;
-				curr->next = NULL;
-			}
-
-			else{
-				curr->next = node;
-				curr = curr->next;
-				curr->next = NULL;
-			}
+			node->terminalFlag = 0;
+			node->path[d] = buildTree(attrArray, attrCount, entrySet, entrySetSize, newEntryArray, newAvailableAttr);
+			printf("Classification: Attribute \"%s\" --- \"%s\" ---> Goes To \"%s\"\n", returnEquivalent(&D, node->attrib), returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, node->path[d]->attrib));
+			
 		}
 
 
 	}
 
-
+	return node;
 }
 
 // ...AND THIS COMMENT :)
@@ -873,9 +858,9 @@ int main(){
 	system("cls");
 	printf("BUILDING FINALLY ID3 HAPPENED TO ME :>\n\n");
 	treeNode * root = (treeNode *) malloc(sizeof(treeNode));
-	root = buildTree(attrArray, A.count, initialSet, 51, considerArray, availableAttr);
+	buildTree(attrArray, A.count, initialSet, 51, considerArray, availableAttr);
 	printf("\n");
-	printf("%d\n", root->info->nodeAttrib);
+	printf("%d\n", root->attrib);
 	
 	// getEntryLine(initialSet, A.count, 1);
 
