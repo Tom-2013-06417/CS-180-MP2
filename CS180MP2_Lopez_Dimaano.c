@@ -5,7 +5,6 @@
 #include <time.h>
 
 
-
 FILE * input;
 
 
@@ -563,6 +562,32 @@ void selectTrainingSamples(int ** inputArray, int * trainingSamplesConsiderArray
 	}
 }
 
+void selectSmallerTrainingSamples(int ** inputArray, int * trainingSamplesConsiderArray){
+	int i, j, counter=0;
+
+	i = myRandom (51);
+
+	for (j=1; j<=15; j++){
+		if (i == 0)	i = myRandom (-1);
+		trainingSamplesConsiderArray[i] = 1;					//Set to 1 if training sample of smaller set
+		//printf("%d\n", i);
+		// for (k=0; k<cols; k++){
+		// 	trainingSamplesArray[j][k] = inputArray[i][k];
+		// }
+		i = myRandom (-1);
+	}
+
+	for (j=1; j<=10; j++){
+		if (i == 0)	i = myRandom (-1);
+		trainingSamplesConsiderArray[i] = 2;					//Set to 2 if testing sample of smaller set. It's not 0 because 0 is for the testing samples of the larger set
+		//printf("%d\n", i);
+		// for (k=0; k<cols; k++){
+		// 	trainingSamplesArray[j][k] = inputArray[i][k];
+		// }
+		i = myRandom (-1);
+	}
+}
+
 /*void freeVariables(Dict * D, Attrib * A){
 	entryNode * curr, * alpha;
 	Entry * durr, * beta;
@@ -606,13 +631,6 @@ int ** readinput(Dict * D, Attrib * A){
 
 	rewind(input);
 
-	/*	while (medium != NULL){
-		equivalentTable[i] = (int *) malloc(sizeof(int) * A->count);
-		equivalentTable[i][j] = assignUniqueID(D, medium);
-		medium = strtok(NULL, ",");
-		j++;
-	}*/
-
 	initEntries(A);	
 	
 	while (!feof(input)){
@@ -643,7 +661,7 @@ int ** readinput(Dict * D, Attrib * A){
 		i++;
 	}
 
-	printStats(A);
+	//printStats(A);
 	printEquivalentTable(equivalentTable, A->count, 51);
 	
 	fclose(input);
@@ -664,9 +682,6 @@ int main(){
 
 	int ** initialSet;
 	int ** attrArray;
-
-	int * trainingSamplesArray;
-	int * testSamplesArray;
 
 	int * considerArray;
 	int * availableAttr;
@@ -698,12 +713,6 @@ int main(){
 
 		selectTrainingSamples(initialSet, considerArray);							//Function to return randomly sampled training and test samples!
 		//printConsiderArray(considerArray, 51);
-
-		// system("pause");
-		// printEquivalentTable(trainingSamplesArray, A.count, 30);
-		// system("pause");
-		// printEquivalentTable(testSamplesArray, A.count, 20);
-		// system("pause");
 
 		attrArray = getAttrArray(A);	
 		traverseAttrArray(&D, attrArray, A.count);	
@@ -743,14 +752,6 @@ int main(){
 
 	//////////////////FREE THE USED ARRAYS FROM THE FIRST EXPERIMENT///////////////////
 
-
-	// for (m=0; m<30; m++){
-	// 	free(trainingSamplesArray[m]);
-	// }
-
-	// for (m=0; m<20; m++){
-	// 	free(testSamplesArray[m]);
-	// }
 
 	////////////////END FREE THE USED ARRAYS FROM THE FIRST EXPERIMENT/////////////////
 
