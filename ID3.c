@@ -76,8 +76,7 @@ void buildDecisionTree(){
     Create a root node for the tree
     If all examples are positive, Return the single-node tree Root, with label = +.
     If all examples are negative, Return the single-node tree Root, with label = -.
-    If number of predicting attributes is empty, then Return the single node tree Root,
-    with label = most common value of the target attribute in the examples.
+    If number of predicting attributes is empty, then Return the single node tree Root, with label = most common value of the target attribute in the examples.
     Otherwise Begin
         A ← The Attribute that best classifies examples.
         Decision Tree attribute for Root = A.
