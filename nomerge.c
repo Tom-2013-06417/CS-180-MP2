@@ -463,7 +463,7 @@ int * getDistribution(int * targetAttrArray, int attrCount, int ** entrySet, int
 	x[0] = targetAttrArray[0];
 	for(j = 1; j < entrySetSize; j++){
 		//printf("%d\n", set[j][attrCount-1]);
-		if(considerArray[j] == 1){
+		if(considerArray[j] != 0){
 			for(i = 0; i <= targetAttrArray[0]; i++) {
 				if(targetAttrArray[i] == entrySet[j][attrCount-1]){
 			 		x[i]++;
@@ -559,10 +559,17 @@ int selectDeciderAttr(int ** attrArray, int attrCount, int ** entrySet, int entr
 	double gain = -10000, maxGain = -10000;
 	int maxGainAttr = -1;
 
+	// printf("DECIDER\n");
+
+	// for(i = 0; i < attrCount - 1; i++){
+	// 	printf("at %d: %d\n", i, availableAttr[i]);
+
+	// }
+
 	// printf("Selecting the decider attribute\n");
 	for(i = 0; i < attrCount - 1; i++){
 		//printf("at %d: %d\n", i, availableAttr[i]);
-		if(availableAttr[i] == 1){
+		if(availableAttr[i] != 0){
 			gain = calculateGain(attrArray, attrCount, entrySet, entrySetSize, considerArray, i);
 			// printf("   %d Gain: %lf\n", i, gain);
 
@@ -588,11 +595,12 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 	node->pathChoice = NULL;
 	node->path = NULL;
 
-	int i, j;
+	int i, j, m;
 	int flag = 0;
 	int currentMax, currentMaxIndex;
 	int * currentDist = getDistribution(attrArray[attrCount - 1], attrCount, entrySet, entrySetSize, considerArray);
 	int numTarget = currentDist[0];
+
 	
 	// printf("Distribution  : [");
 	// for(i=1; i<=attrArray[attrCount - 1][0]; i++){
@@ -600,40 +608,55 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 	// }
 	// printf("]\n");
 
+	// printf("Entries:\n[\n");
+	// 	for(j=1; j <51; j++){
+	// 		printf(" %d ", considerArray[j]);
+	// 		if(j%10 == 0) printf("\n");
+	// 	}
+	// printf("]\n");
+
 	//CASE 1: Grouped into one option ang lahat ng remaining cases
-	for(i=1; i<=numTarget; i++){
-		if (flag != 0) flag = -1;
-		if(currentDist[i] != 0){
-			flag = 0;
-			for(j=1; j<=numTarget; j++){
-				if (i == j) break;
-				if (currentDist[j] != 0){
-					flag++;
-					break;
+	if(m != numTarget+1) {
+		for(i=1; i<=numTarget; i++){
+			if (flag != 0) flag = -1;
+			if(currentDist[i] != 0){
+				flag = 0;
+				for(j=1; j<=numTarget; j++){
+					if (i == j) break;
+					if (currentDist[j] != 0){
+						flag++;
+						break;
+					}
 				}
 			}
 		}
+
+		if (flag == 0){
+			for (i = 1; i <= numTarget; i++) if(currentDist[i] != 0) break;
+			// for (m = 1; m <= numTarget; m++) printf(" %d ", currentDist[m]);
+			// printf("\n");
+			node->attrib = attrArray[attrCount - 1][i];
+			node->terminalFlag = 1;
+			// if(node->attrib == 0){
+			// 	printf("%d %d %d %d\n", attrCount, i, attrArray[attrCount-1][0], attrArray[attrCount-1][i]);
+			// 	exit(69);
+			// }
+			return node;	
+		} 
 	}
 
-	if (flag == 0){
-		for (i = 1; i <= numTarget; i++) if(currentDist[i] != 0) break;
-		node->attrib = attrArray[attrCount - 1][i];
-		node->terminalFlag = 1;
-		return node;	
-	} 
 
 
 
+		
+
+
+
+	//OTHERWISE SEGMENT
+	int decider = selectDeciderAttr(attrArray, attrCount, entrySet, entrySetSize, considerArray, availableAttr);
+	
 	//CASE 2: no more attribute choices
-	flag = 0;
-	for(i = 0; i < attrCount; i++){
-		if (availableAttr[i] == 1){
-			flag = 1;
-			break;
-		}
-	}
-
-	if (flag == 0){
+	if (decider == -1){
 		currentMax = currentDist[1];
 		currentMaxIndex = 1;
 		for(i = 2; i <= numTarget; i++){
@@ -646,12 +669,8 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 		node->attrib = currentMaxIndex;
 		node->terminalFlag = 1;
 		return node;
-	}	
+	}
 
-
-
-	//OTHERWISE SEGMENT
-	int decider = selectDeciderAttr(attrArray, attrCount, entrySet, entrySetSize, considerArray, availableAttr);
 	node->attrib = decider;	
 	
 	int * newAvailableAttr = (int *) malloc(sizeof(int)*attrCount); 
@@ -669,6 +688,7 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 	temp->pathChoice = NULL;
 	temp->path = NULL;
 	
+	// printf("%d\n", decider);
 	int numAttr = attrArray[decider][0];
 	int d;
 	node->path = (treeNode **)malloc(sizeof(treeNode*)* (numAttr+1));
@@ -691,15 +711,19 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 		// }
 		// printf("]\n");
 
-		flag = 0;
-		for (j = 1; j < entrySetSize; j++){
-			if(newEntryArray[j] != 0){
-				flag++;
-				break;
-			}
-		}
+		// flag = 0;
+		// for (j = 1; j < entrySetSize; j++){
+		// 	if(newEntryArray[j] != 0){
+		// 		flag++;
+		// 		break;
+		// 	}
+		// }
 
-		if(flag == 0){
+		for (m = 1; m < entrySetSize; m++) if(newEntryArray[m] != 0) break;
+
+		// if(flag == 0){
+		if(m == entrySetSize){
+		// printf("ENTERED\n"); 
 			currentMax = currentDist[1]; 
 			currentMaxIndex = 1;
 			for (j = 2; j <= numTarget; j++){
@@ -723,13 +747,15 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 		}
 
 		else{
+			// printf("FLAG %d %d\n", d, numAttr);
+			// printf("%d %s\n", node->pathChoice[d], getAttrName(node->pathChoice[d]));		
+			// printf("%d ENTERED 2\n", m); 
 			node->terminalFlag = 0;
 			node->path[d] = buildTree(attrArray, attrCount, entrySet, entrySetSize, newEntryArray, newAvailableAttr);
+			// if(node->path[d]->terminalFlag == 1) printf("RET: %d\n", node->path[d]->attrib);
 			// printf("Classification: Attribute \"%s\" --- \"%s\" ---> Goes To \"%s\"\n", returnEquivalent(&D, node->attrib), returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, node->path[d]->attrib));
 			
 		}
-
-		//printf("\n");
 	}
 
 	return node;
@@ -771,7 +797,7 @@ void printDecisionTree(treeNode * root, int space){
 
 		curr = root->path[i];
 		if (curr->terminalFlag != 1) printDecisionTree(curr, space+1);
-		else printf("%s\n", getAttrName(curr->attrib));
+		else printf("TARGET: %s\n", getAttrName(curr->attrib));
 	}
 }
 
@@ -863,7 +889,7 @@ int calculateAccuracy(treeNode * root, int ** entries, int * considerArray, int 
 			}
 		}
 
-		accuracy = (float)num/float(20)*100;
+		accuracy = (float)num/(float)(20)*100;
 		printf("Accuracy: %.2f %%\n", accuracy);
 		return accuracy;
 
@@ -881,7 +907,7 @@ int calculateAccuracy(treeNode * root, int ** entries, int * considerArray, int 
 			}
 		}
 
-		accuracy = (float)num/float(10)*100;
+		accuracy = (float)num/(float)(10)*100;
 		printf("Accuracy: %.2f %%\n", accuracy);
 		return accuracy;
 
@@ -1048,12 +1074,13 @@ int main(){
 	//TRAVERSAL TEST
 	// system("cls");
 	// printf("%d\n", A.count);
-	// int test[9] = {28, 29, 23, 24, 30, 31, 21,26, 38};
+	int test[9] = {28, 29, 23, 24, 30, 31, 21,26, 38};
 	// // med justenough public average manageable few notreally neardcs maginhawa
 	// printf("\n");
 
 	// printf("\n\nNOISEEEE\n");
-	// printf("%d", assess(root, test, A.count));
+	printf("%d", assess(root, test, A.count));
+
 	
 	return 0;
 
