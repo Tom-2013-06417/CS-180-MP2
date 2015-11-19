@@ -616,34 +616,32 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 	// printf("]\n");
 
 	//CASE 1: Grouped into one option ang lahat ng remaining cases
-	if(m != numTarget+1) {
-		for(i=1; i<=numTarget; i++){
-			if (flag != 0) flag = -1;
-			if(currentDist[i] != 0){
-				flag = 0;
-				for(j=1; j<=numTarget; j++){
-					if (i == j) break;
-					if (currentDist[j] != 0){
-						flag++;
-						break;
-					}
+	for(i=1; i<=numTarget; i++){
+		if (flag != 0) flag = -1;
+		if(currentDist[i] != 0){
+			flag = 0;
+			for(j=1; j<=numTarget; j++){
+				if (i == j) break;
+				if (currentDist[j] != 0){
+					flag++;
+					break;
 				}
 			}
 		}
-
-		if (flag == 0){
-			for (i = 1; i <= numTarget; i++) if(currentDist[i] != 0) break;
-			// for (m = 1; m <= numTarget; m++) printf(" %d ", currentDist[m]);
-			// printf("\n");
-			node->attrib = attrArray[attrCount - 1][i];
-			node->terminalFlag = 1;
-			// if(node->attrib == 0){
-			// 	printf("%d %d %d %d\n", attrCount, i, attrArray[attrCount-1][0], attrArray[attrCount-1][i]);
-			// 	exit(69);
-			// }
-			return node;	
-		} 
 	}
+
+	if (flag == 0){
+		for (i = 1; i <= numTarget; i++) if(currentDist[i] != 0) break;
+		// for (m = 1; m <= numTarget; m++) printf(" %d ", currentDist[m]);
+		// printf("\n");
+		node->attrib = attrArray[attrCount - 1][i];
+		node->terminalFlag = 1;
+		// if(node->attrib == 0){
+		// 	printf("%d %d %d %d\n", attrCount, i, attrArray[attrCount-1][0], attrArray[attrCount-1][i]);
+		// 	exit(69);
+		// }
+		return node;	
+	} 
 
 
 
