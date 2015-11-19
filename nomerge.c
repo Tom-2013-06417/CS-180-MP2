@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-
+#include <time.h>
 
 
 FILE * input;
-
 
 
 typedef struct dictionaryNode dNode;
@@ -60,6 +59,50 @@ struct decisionTreeNode{
 
 
 Dict D;
+
+
+
+//Unique Randomizer code segment retrieved from http://stackoverflow.com/questions/5064379/generating-unique-random-numbers-in-c
+
+#define ERR_NO_NUM -1
+#define ERR_NO_MEM -2
+
+int myRandom (int size) {
+	int i, n;
+	static int numNums = 0;
+	static int *numArr = NULL;
+
+	// Initialize with a specific size.
+
+	if (size >= 0) {
+		if (numArr != NULL)
+			free (numArr);
+		if ((numArr = (int * )malloc (sizeof(int) * (size))) == NULL)
+			return ERR_NO_MEM;
+		for (i = 0; i  < size; i++)
+			numArr[i] = i;
+		numNums = size;
+	}
+
+	// Error if no numbers left in pool.
+
+	if (numNums == 0)
+	   return ERR_NO_NUM;
+
+	// Get random number from pool and remove it (rnd in this
+	// case returns a number between 0 and numNums-1 inclusive).
+
+	n = rand() % numNums;
+	i = numArr[n];
+	numArr[n] = numArr[numNums-1];
+	numNums--;
+	if (numNums == 0) {
+		free (numArr);
+		numArr = 0;
+	}
+
+	return i;
+}
 
 
 
@@ -218,7 +261,7 @@ int * initArray(int size){
 	array[0] = size;
 	
 	for(i=1; i<=size; i++){
-		array[i] = 1;
+		array[i] = 0;
 	}
 
 	return array;
@@ -368,7 +411,7 @@ int ** getAttrArray(Attrib A){
 }
 
 
-//log base 2 function
+//log base x function
 double logx(double x, int base){
 	return (double) (log(x) / log(base));
 }
@@ -474,7 +517,7 @@ double calculateGain(int ** attrArray, int attrCount, int ** entrySet, int entry
 	double entropy;
 	double gain = calculateEntropy(initialDist);
 
-	// printf("\nCalculating gain at attribute %s\n   Entropy: %lf\n", returnEquivalent(&D, classifierAttr),  gain);
+	//printf("\nCalculating gain at attribute %s\n   Entropy: %lf\n", returnEquivalent(&D, classifierAttr),  gain);
 
 	for (i = 1; i <= attrArray[classifierAttr][0]; i++){
 		subDist = getDistribution(attrArray[attrCount - 1], attrCount, entrySet, entrySetSize, 
@@ -551,11 +594,11 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 	int * currentDist = getDistribution(attrArray[attrCount - 1], attrCount, entrySet, entrySetSize, considerArray);
 	int numTarget = currentDist[0];
 	
-	printf("Distribution  : [");
-	for(i=1; i<=attrArray[attrCount - 1][0]; i++){
-		printf(" %d ", currentDist[i]);
-	}
-	printf("]\n");
+	// printf("Distribution  : [");
+	// for(i=1; i<=attrArray[attrCount - 1][0]; i++){
+	// 	printf(" %d ", currentDist[i]);
+	// }
+	// printf("]\n");
 
 	//CASE 1: Grouped into one option ang lahat ng remaining cases
 	for(i=1; i<=numTarget; i++){
@@ -638,15 +681,15 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 
 		node->pathChoice[d] = attrArray[decider][d]; 
 		
-		printf("Ramification  : \"%s\" under \"%s\" (%d out of %d)\n", returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, decider), d, numAttr);
+		// printf("Ramification  : \"%s\" under \"%s\" (%d out of %d)\n", returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, decider), d, numAttr);
 		newEntryArray = reconsiderArray(entrySet, entrySetSize, considerArray, decider, attrArray[decider][d]);
 
-		printf("Entries:\n[\n");
-		for(j=1; j <51; j++){
-			printf(" %d ", newEntryArray[j]);
-			if(j%10 == 0) printf("\n");
-		}
-		printf("]\n");
+		// printf("Entries:\n[\n");
+		// for(j=1; j <51; j++){
+		// 	printf(" %d ", newEntryArray[j]);
+		// 	if(j%10 == 0) printf("\n");
+		// }
+		// printf("]\n");
 
 		flag = 0;
 		for (j = 1; j < entrySetSize; j++){
@@ -660,7 +703,7 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 			currentMax = currentDist[1]; 
 			currentMaxIndex = 1;
 			for (j = 2; j <= numTarget; j++){
-				printf("%d\n", currentDist[j]);
+				//printf("%d\n", currentDist[j]);
 
 				if(currentDist[j] > currentMax){
 					currentMax = currentDist[j];
@@ -675,18 +718,18 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 			// printf("%s\n", returnEquivalent(&D, temp->attrib));
 			// printf("\n\n\n\n");
 			// printf("ERROR!!!\n");
-			printf("Classification: Attribute \"%s\" --- \"%s\" ---> Goes To \"%s\"\n", returnEquivalent(&D, node->attrib), returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, temp->attrib));
+			// printf("Classification: Attribute \"%s\" --- \"%s\" ---> Goes To \"%s\"\n", returnEquivalent(&D, node->attrib), returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, temp->attrib));
 
 		}
 
 		else{
 			node->terminalFlag = 0;
 			node->path[d] = buildTree(attrArray, attrCount, entrySet, entrySetSize, newEntryArray, newAvailableAttr);
-			printf("Classification: Attribute \"%s\" --- \"%s\" ---> Goes To \"%s\"\n", returnEquivalent(&D, node->attrib), returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, node->path[d]->attrib));
+			// printf("Classification: Attribute \"%s\" --- \"%s\" ---> Goes To \"%s\"\n", returnEquivalent(&D, node->attrib), returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, node->path[d]->attrib));
 			
 		}
 
-
+		//printf("\n");
 	}
 
 	return node;
@@ -710,12 +753,12 @@ int assess(treeNode * root, int * testCase, int attrCount){
 
 	printf("CONCLUSION: %s\n", getAttrName(testCase[attrCount - 1]));
 	printf("HYPOTHESIS: %s\n", getAttrName(curr->attrib));
-	printf("\n");
+	//printf("\n");
 
-	return curr->attrib;
+	return (strcmp(getAttrName(curr->attrib), getAttrName(testCase[attrCount - 1])) == 0 ? 1:0);
 }
 
-int printDecisionTree(treeNode * root, int space){
+void printDecisionTree(treeNode * root, int space){
 	int i, j;
 	treeNode * curr = root;
 
@@ -730,8 +773,6 @@ int printDecisionTree(treeNode * root, int space){
 		if (curr->terminalFlag != 1) printDecisionTree(curr, space+1);
 		else printf("%s\n", getAttrName(curr->attrib));
 	}
-
-	return;
 }
 
 // ...AND THIS COMMENT :)
@@ -755,30 +796,98 @@ void printStats(Attrib * A){
 	} while (curr != NULL);
 }
 
-void shuffleArray(int ** array){
-	
+void printConsiderArray(int * considerArray, int size){
+	int i;
+
+	for (i=0; i<size; i++){
+		printf("%d ", considerArray[i]);
+	}
 }
 
-/*void freeVariables(Dict * D, Attrib * A){
-	entryNode * curr, * alpha;
-	Entry * durr, * beta;
+void selectTrainingSamples(int ** inputArray, int * trainingSamplesConsiderArray){
+	int i, j;
 
-	attribNode * furr, * gamma;
-	Attrib * gurr, * delta;
+	i = myRandom (51);
 
-	gurr = A->link;
+	for (j=1; j<=30; j++){
+		if (i == 0)	i = myRandom (-1);
+		trainingSamplesConsiderArray[i] = 1;
+		i = myRandom (-1);
+	}
+}
 
-	while (1){
-		furr = 
-		alpha = furr;		
-		if (curr == NULL) break;
-		curr = curr->next;
-		free(alpha);
+void selectSmallerTrainingSamples(int ** inputArray, int * trainingSamplesConsiderArray){
+	int i, j, trainCounter=0, testCounter=0;
+	
+	i = myRandom (51);
+
+	for (j=1; j<=50; j++){
+		if (i == 0)	i = myRandom (-1);
+		
+		if (trainingSamplesConsiderArray[i] == 1 && trainCounter < 15){
+			trainingSamplesConsiderArray[i] = 2;
+			trainCounter++;
+		}
+
+		else if (trainingSamplesConsiderArray[i] == 0 && testCounter < 10){
+			trainingSamplesConsiderArray[i] = 3;
+			testCounter++;
+		}
+
+		i = myRandom (-1);
 	}
 
-	curr = A->link;
+	for (j=1; j<=50; j++){
+		if (trainingSamplesConsiderArray[j] == 1) trainingSamplesConsiderArray[j] = 0;
+	}
 
-}*/
+	for (j=1; j<=50; j++){
+		if (trainingSamplesConsiderArray[j] == 2) trainingSamplesConsiderArray[j] = 1;
+	}
+
+}
+
+int calculateAccuracy(treeNode * root, int ** entries, int * considerArray, int count, int testCasesCount, int experimentNumber){
+	int i, num=0;
+	float accuracy;
+
+	if (experimentNumber == 1){
+
+		for(i=1; i<testCasesCount+1; i++) {
+			if (considerArray[i] == 0){
+				printf("ENTRY #  %d\n", i);
+				if (assess(root, entries[i], count)){
+					num++;
+				}
+				printf("\n");
+			}
+		}
+
+		accuracy = (float)num/float(20)*100;
+		printf("Accuracy: %.2f %%\n", accuracy);
+		return accuracy;
+
+	}
+
+	else if (experimentNumber == 2){
+
+		for(i=1; i<testCasesCount+1; i++) {
+			if (considerArray[i] == 3){
+				printf("ENTRY # %d\n", i);
+				if (assess(root, entries[i], count)){
+					num++;
+				}
+				printf("\n");
+			}
+		}
+
+		accuracy = (float)num/float(10)*100;
+		printf("Accuracy: %.2f %%\n", accuracy);
+		return accuracy;
+
+	}
+
+}
 
 int ** readinput(Dict * D, Attrib * A){	
 	int i=0, j=0;
@@ -801,13 +910,6 @@ int ** readinput(Dict * D, Attrib * A){
 	}
 
 	rewind(input);
-
-	while (medium != NULL){
-		equivalentTable[i] = (int *) malloc(sizeof(int) * A->count);
-		equivalentTable[i][j] = assignUniqueID(D, medium);
-		medium = strtok(NULL, ",");
-		j++;
-	}
 
 	initEntries(A);	
 	
@@ -839,13 +941,14 @@ int ** readinput(Dict * D, Attrib * A){
 		i++;
 	}
 
-	printStats(A);
-	printEquivalentTable(equivalentTable, A->count);
+	//printStats(A);
+	//printEquivalentTable(equivalentTable, A->count);
 	
 	fclose(input);
 
 	return equivalentTable;
 }
+
 
 
 int main(){
@@ -859,87 +962,98 @@ int main(){
 
 	int ** initialSet;
 	int ** attrArray;
+
 	int * considerArray;
+	int * considerArrayForExperiment2;
 	int * availableAttr;
 	int * dist;
-	int i;
+	int i, m;
+
+	float averageAccuracy;
+
+	srand(time(NULL));	
 	
-	//file read and initialization
-	initialSet = readinput(&D, &A);
-	printf("\n\n");
-	// printf("\n\n%s\n\n", returnEquivalent(&D, 9));
-	
-	//start of ID3 shit supposedly
-	// system("cls");
+	initialSet = readinput(&D, &A);																	//file read and initialization
 	attrArray = getAttrArray(A);
-	// system("cls");
+
 	traverseAttrArray(&D, attrArray, A.count);
-	// system("cls");
-
-	considerArray = initArray(50);
-	for(i=0; i<30; i++) considerArray[i] = 0; 
 	availableAttr = (int *) malloc(sizeof(int) * A.count);
+
+
+	printf("\n\nEXPERIMENT 1: \n\n");
+	
+	////////////////////////////START EXPERIMENT NUMBER 1: MORE SAMPLES//////////////////////////////
+
+	for (m=0; m<5; m++){
+
+		printf("K-fold cross validation: K=%d\n\n", m+1);
+
+		considerArray = initArray(50);
+		
+		selectTrainingSamples(initialSet, considerArray);											//Function to return randomly sampled training and test samples!
+		
+		if (m == 0) {
+			considerArrayForExperiment2 = initArray(50);
+			for (i=1; i<=50; i++) considerArrayForExperiment2[i] = considerArray[i];
+		}
+
+		for (i=0; i<A.count; i++) availableAttr[i] = 1; 
+
+		treeNode * root = (treeNode *) malloc(sizeof(treeNode));
+		root = buildTree(attrArray, A.count, initialSet, 51, considerArray, availableAttr);
+
+		printDecisionTree(root, 0);
+		printf("\n");	
+
+		averageAccuracy += calculateAccuracy(root, initialSet, considerArray, A.count, 50, 1);
+		printf("\n\n");
+
+	}
+
+	averageAccuracy /= 5;
+
+	printf("\nAverage accuracy of Decision Tree for Experiment 1: %.2f %%\n", averageAccuracy);
+
+	//////////////////////////////////////END OF EXPERIMENT 1////////////////////////////////////////
+
+
+	printf("\n\nEXPERIMENT 2: \n\n");
+
+
+	////////////////////////////START EXPERIMENT NUMBER 2: LESS SAMPLES//////////////////////////////	
+
+	selectSmallerTrainingSamples(initialSet, considerArrayForExperiment2);
+
 	for(i=0; i<A.count; i++) availableAttr[i] = 1; 
-		printf("FLAG\n");
-	
-	// dist = getDistribution(attrArray[A.count - 1], A.count, initialSet, 51, considerArray);
 
-
-	//PRINT DISTRIBUTION TEST
-	// system("cls");
-	// printf("DISTRIBUTION: \n");	
-	// for (i = 1; i <= dist[0]; i++){
-	// 	printf("\t%d >> %s\n", dist[i], returnEquivalent(&D, attrArray[A.count - 1][i]));
-	// }
-
-	//ENTROPY TEST
-	// system("cls");
-	// int zzz[5] = {4, 2, 0, 0, 0}; 
-	// printf("%lf\n\n", calculateEntropy(zzz));
-	// printf("%lf\n", calculateEntropy(dist));
-
-	//RECONSIDER TEST
-	// printf("\n\n%s\n\n", returnEquivalent(&D, 0));
-	// int * newarray = reconsiderArray(initialSet, 51, considerArray, 0, 9);
-	
-
-	//GAIN TEST
-	// system("cls");
-	// calculateGain(attrArray, A.count, initialSet, 51, considerArray, 0);
-
-	//DECIDER TEST
-	// system("cls");
-	// selectDeciderAttr(attrArray, A.count, initialSet, 51, considerArray, availableAttr);
-	
-	//BUILDER TEST
-	// system("cls");
-	printf("BUILDING FINALLY ID3 HAPPENED TO ME :>\n\n");
 	treeNode * root = (treeNode *) malloc(sizeof(treeNode));
-	root = buildTree(attrArray, A.count, initialSet, 51, considerArray, availableAttr);
-	printf("\n");
-	printf("%d\n", root->attrib);
-	printf("%d\n", root->path[1]->attrib);
+	root = buildTree(attrArray, A.count, initialSet, 51, considerArrayForExperiment2, availableAttr);
 
-	//PRINT TEST
-	// system("cls");
 	printDecisionTree(root, 0);
+	printf("\n");	
+
+	averageAccuracy += calculateAccuracy(root, initialSet, considerArrayForExperiment2, A.count, 50, 2);
+	printf("\n\n");
+
+	//////////////////////////////////////END OF EXPERIMENT 2////////////////////////////////////////
+
+
+	printf("\n\nEXPERIMENT 3: \n\n");
+
+
+	///////////////////////////START EXPERIMENT NUMBER 3: NOISY SAMPLES//////////////////////////////
+
+
 
 	//TRAVERSAL TEST
 	// system("cls");
 	// printf("%d\n", A.count);
-	int test[9] = {28, 29, 23, 24, 30, 31, 21,26, 38};
-	// med justenough public average manageable few notreally neardcs maginhawa
-	printf("\n");
-	for(i=30; i<51; i++) {
-		printf("CASE %d\n", i);
-		assess(root, initialSet[i], A.count);
-	}
-	printf("\n\nNOISEEEE\n");
-	assess(root, test, A.count);
-	
-	// getEntryLine(initialSet, A.count, 1);
+	// int test[9] = {28, 29, 23, 24, 30, 31, 21,26, 38};
+	// // med justenough public average manageable few notreally neardcs maginhawa
+	// printf("\n");
 
-	// freeVariables(&D, &A);
+	// printf("\n\nNOISEEEE\n");
+	// printf("%d", assess(root, test, A.count));
 	
 	return 0;
 

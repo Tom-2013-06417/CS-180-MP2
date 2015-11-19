@@ -396,18 +396,6 @@ double logx(double x, int base){
 	return (double) (log(x) / log(base));
 }
 
-int numberOfClassifications(Attrib * A){
-	attribNode * curr;
-
-	curr = A->link;
-
-	while (curr->next != NULL){
-		curr = curr->next;
-	}
-
-	return curr->E->count;
-}
-
 //calculate total number of unique attribute types
 int calculateAttrTotal(int * x){
 	int i, total = 0;
