@@ -199,6 +199,17 @@ char * returnEquivalent(Dict * D, int index){
 	return curr->entry;
 }
 
+char * getAttrName(int index){
+	Dict * dict = &D;
+	dNode * curr = dict->top;
+
+	while (curr->index != index){
+		curr = curr->next;
+	}
+
+	return curr->entry;
+}
+
 //DIEGO MADE NEW FUNCTIONS + CHANGES BETWEEN THIS COMMENT...
 //NEW FUNCTION!!! initializes an array of indicated size + 1, size of array noted at 0th index
 int * initArray(int size){
@@ -649,17 +660,21 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 			currentMax = currentDist[1]; 
 			currentMaxIndex = 1;
 			for (j = 2; j <= numTarget; j++){
+				printf("%d\n", currentDist[j]);
+
 				if(currentDist[j] > currentMax){
 					currentMax = currentDist[j];
 					currentMaxIndex = j;
 				}
 			}		
 
-			printf("MAX: %d\n", currentMax);
-
-			temp->attrib = attrArray[decider][currentMaxIndex];
+			//printf("%d %d / %d\n", currentDist[currentMaxIndex], currentMaxIndex, attrArray[attrCount - 1][currentMaxIndex]);
+			temp->attrib = attrArray[attrCount - 1][currentMaxIndex];
 			temp->terminalFlag = 1;
 			node->path[d] = temp;
+			// printf("%s\n", returnEquivalent(&D, temp->attrib));
+			// printf("\n\n\n\n");
+			// printf("ERROR!!!\n");
 			printf("Classification: Attribute \"%s\" --- \"%s\" ---> Goes To \"%s\"\n", returnEquivalent(&D, node->attrib), returnEquivalent(&D, node->pathChoice[d]), returnEquivalent(&D, temp->attrib));
 
 		}
@@ -675,6 +690,48 @@ treeNode * buildTree(int ** attrArray, int attrCount, int ** entrySet, int entry
 	}
 
 	return node;
+}
+
+int assess(treeNode * root, int * testCase, int attrCount){
+	int i, x, y;
+	treeNode * curr = root;
+
+	printf("TEST CASE : [");
+	for(i=0; i<attrCount; i++){
+		printf(" %s ", getAttrName(testCase[i]));
+	}
+	printf("]\n");
+
+	while(curr->terminalFlag != 1){
+		x = testCase[curr->attrib];
+		for(i=1; i<curr->pathChoice[0]; i++) if(curr->pathChoice[i] == x) break;
+		curr = curr->path[i];
+	}
+
+	printf("CONCLUSION: %s\n", getAttrName(testCase[attrCount - 1]));
+	printf("HYPOTHESIS: %s\n", getAttrName(curr->attrib));
+	printf("\n");
+
+	return curr->attrib;
+}
+
+int printDecisionTree(treeNode * root, int space){
+	int i, j;
+	treeNode * curr = root;
+
+
+	printf("%s\n", getAttrName(root->attrib));
+	
+	for(i = 1; i <= root->pathChoice[0]; i++){
+		for(j = 0; j < space + 1; j++) printf("|--");
+		printf("> [%s] ", getAttrName(root->pathChoice[i])); 
+
+		curr = root->path[i];
+		if (curr->terminalFlag != 1) printDecisionTree(curr, space+1);
+		else printf("%s\n", getAttrName(curr->attrib));
+	}
+
+	return;
 }
 
 // ...AND THIS COMMENT :)
@@ -820,6 +877,7 @@ int main(){
 	// system("cls");
 
 	considerArray = initArray(50);
+	for(i=0; i<30; i++) considerArray[i] = 0; 
 	availableAttr = (int *) malloc(sizeof(int) * A.count);
 	for(i=0; i<A.count; i++) availableAttr[i] = 1; 
 		printf("FLAG\n");
@@ -854,13 +912,30 @@ int main(){
 	// selectDeciderAttr(attrArray, A.count, initialSet, 51, considerArray, availableAttr);
 	
 	//BUILDER TEST
-	int availableAttr2[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-	system("cls");
+	// system("cls");
 	printf("BUILDING FINALLY ID3 HAPPENED TO ME :>\n\n");
 	treeNode * root = (treeNode *) malloc(sizeof(treeNode));
-	buildTree(attrArray, A.count, initialSet, 51, considerArray, availableAttr);
+	root = buildTree(attrArray, A.count, initialSet, 51, considerArray, availableAttr);
 	printf("\n");
 	printf("%d\n", root->attrib);
+	printf("%d\n", root->path[1]->attrib);
+
+	//PRINT TEST
+	// system("cls");
+	printDecisionTree(root, 0);
+
+	//TRAVERSAL TEST
+	// system("cls");
+	// printf("%d\n", A.count);
+	int test[9] = {28, 29, 23, 24, 30, 31, 21,26, 38};
+	// med justenough public average manageable few notreally neardcs maginhawa
+	printf("\n");
+	for(i=30; i<51; i++) {
+		printf("CASE %d\n", i);
+		assess(root, initialSet[i], A.count);
+	}
+	printf("\n\nNOISEEEE\n");
+	assess(root, test, A.count);
 	
 	// getEntryLine(initialSet, A.count, 1);
 
